@@ -1,0 +1,18 @@
+<!doctype html><meta charset="utf-8"><title>tve helper</title>
+<script>
+// Sends requested media files from this repo to the Business Suite page that embeds it.
+const ALLOWED = 'https://business.facebook.com';
+window.addEventListener('message', async (e) => {
+  if (e.origin !== ALLOWED || !e.data || !Array.isArray(e.data.want)) return;
+  const files = [];
+  for (const name of e.data.want) {
+    if (!/^[A-Za-z0-9_]+\.(jpg|mp4)$/.test(name)) continue;
+    const r = await fetch('./' + name);
+    if (!r.ok) { files.push({name, error: r.status}); continue; }
+    const b = await r.blob();
+    files.push(new File([b], name, {type: name.endsWith('.mp4') ? 'video/mp4' : 'image/jpeg'}));
+  }
+  e.source.postMessage({tveFiles: files, id: e.data.id}, ALLOWED);
+});
+parent.postMessage({tveReady: true}, ALLOWED);
+</script>
